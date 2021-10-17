@@ -1,0 +1,14 @@
+<template>
+    <lightning-card icon="standard:record">
+        <div>
+            <lightning-file-upload accept=".csv"
+            label="Download CSV file"
+            multiple="multiple"
+            record-id = {recordId}
+            onuploadfinished={downloadCSVHandler}>
+            </lightning-file-upload>
+        </div>
+        
+
+    </lightning-card>
+</template>
