@@ -1,14 +1,24 @@
 <template>
-    <lightning-card icon="standard:record">
+    <lightning-card>
         <div>
             <lightning-file-upload accept=".csv"
             label="Download CSV file"
-            multiple="multiple"
             record-id = {recordId}
             onuploadfinished={downloadCSVHandler}>
             </lightning-file-upload>
         </div>
-        
+        <!-- <div>
+            <template if:true={error}>
+                <p>{error}</p>
+            </template>
+        </div> -->
+       
+        <template if:true={sensors}>
+            <lightning-datatable key-field="Id" 
+                                data={sensors} 
+                                columns={columns}>
+            </lightning-datatable>
+        </template>   
 
     </lightning-card>
 </template>
