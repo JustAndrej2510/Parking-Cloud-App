@@ -1,4 +1,8 @@
 public with sharing class sensorManagementController {
+    public virtual class BaseException extends Exception {}
+    public class SensorsListException extends BaseException {}
+    public class DocumentException extends BaseException {}
+
     @AuraEnabled
     public static List<Sensor__c> readCSVData(Id contentDocumentId){
         List<Sensor__c> sensorList = new List<Sensor__c>();
@@ -27,10 +31,32 @@ public with sharing class sensorManagementController {
                 }
             }
 
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        } catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
         }
         return sensorList;
+    }
+
+    @AuraEnabled
+    public static void deleteSelectedSensors(List<Id> selectedSensorsId){
+        try{
+            if(!selectedSensorsId.isEmpty()){
+                List<Sensor__c> deleteSensorsList = new List<Sensor__c>();
+                for(Id sensorId : selectedSensorsId){
+                    Sensor__c sensor = new Sensor__c(Id = sensorId);
+                    deleteSensorsList.add(sensor);
+                }
+                if(!deleteSensorsList.isEmpty()){
+                    delete deleteSensorsList;
+                }
+            }
+            else{
+                throw new SensorsListException('No sensors selected') ;
+            }
+        }
+        catch(Exception ex){
+            throw new AuraHandledException(ex.getMessage());
+        }
     }
 
     @AuraEnabled(cacheable = true)
