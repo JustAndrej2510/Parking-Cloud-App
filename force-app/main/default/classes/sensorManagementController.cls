@@ -1,4 +1,4 @@
-public with sharing class sensorManagementController {
+public with sharing class SensorManagementController {
     public virtual class BaseException extends Exception {}
     public class SensorsListException extends BaseException {}
     public class DocumentException extends BaseException {}
@@ -40,6 +40,7 @@ public with sharing class sensorManagementController {
     @AuraEnabled
     public static void deleteSelectedSensors(List<Id> selectedSensorsId){
         try{
+            System.debug(selectedSensorsId);
             if(!selectedSensorsId.isEmpty()){
                 List<Sensor__c> deleteSensorsList = new List<Sensor__c>();
                 for(Id sensorId : selectedSensorsId){
