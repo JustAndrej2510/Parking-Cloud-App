@@ -7,12 +7,9 @@
             onuploadfinished={downloadCSVHandler}>
             </lightning-file-upload>
         </div>
-        <!-- <div>
-            <template if:true={error}>
-                <p>{error}</p>
-            </template>
-        </div> -->
-       
+        <template if:true={error}>
+            <p>{error}</p>
+        </template>
         <template if:true={sensors}>
             <lightning-datatable key-field="Id" 
                                 data={sensors} 

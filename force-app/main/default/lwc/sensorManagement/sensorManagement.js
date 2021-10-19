@@ -27,7 +27,7 @@ export default class sensorManagement extends LightningElement {
         if(result.data){
             this.error = undefined;
             this.wiredRecords = result.data;
-            console.log(JSON.stringify(this.wiredRecords));
+            //console.log(JSON.stringify(this.wiredRecords));
             let sensorArr = [];
             result.data.forEach(record => {
                 let sensor = {};
@@ -40,7 +40,7 @@ export default class sensorManagement extends LightningElement {
                     }
                 })
                 sensorArr.push(sensor);
-                console.log(sensorArr);
+                //console.log(sensorArr);
             });
             this.sensors = sensorArr;
            
@@ -58,11 +58,11 @@ export default class sensorManagement extends LightningElement {
     // }
 
     downloadCSVHandler(event){
-        const downloadFile = event.detail.files;
-
-        readCSV({contentDocumentId : uploadedFiles[0].documentId})
+        const downloadFiles = event.detail.files;
+        console.log('fileId: ' + downloadFiles[0].documentId);
+        readCSV({contentDocumentId : downloadFiles[0].documentId})
         .then(result=> {
-            window.console.log('result: '+ result);
+            console.log('result: '+ result);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success',
@@ -72,7 +72,7 @@ export default class sensorManagement extends LightningElement {
             );
         })
         .catch(error=>{
-            window.console.log('error: '+ error);
+            console.log('error: '+ error);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',

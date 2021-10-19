@@ -10,9 +10,15 @@ public with sharing class sensorManagementController {
                     Sensor__c newSensor = new Sensor__c();
                     List<String> csvRowList = csvRecordList[i].split(',');
                     System.debug('csvRow: '+ csvRowList);
-                    newSensor.Sensor_Model__c = csvRowList[0];
+                    newSensor.Sensor_model__c = csvRowList[0];
                     newSensor.Status__c = csvRowList[1];
-                    newSensor.Base_Station__c = csvRowList[2];
+                    for(Base_Station__c station : getBaseStations()){
+                        System.debug('csvRowList[2]: ' + csvRowList[2]);
+                        if(station.Name == csvRowList[2].trim()){
+                            newSensor.Base_Station__c = station.Id;
+                        }
+                    }
+                    //newSensor.Base_Station__c = csvRowList[2];
                     sensorList.add(newSensor);
                 }
                 
