@@ -1,0 +1,37 @@
+<template>
+    <lightning-card>
+        <div class="slds-align_absolute-center" style="margin: 0 0 20px 0">
+            <lightning-file-upload accept=".csv"
+                                label="Download CSV file"
+                                record-id = {recordId}
+                                onuploadfinished={downloadCSVHandler}>
+            </lightning-file-upload>
+        </div>
+        <template if:true={error}>
+            <p>{error}</p>
+        </template>
+        <template if:true={sensors}>
+            <div class="slds-grid slds-grid_align-spread">
+                <div class="slds-col">
+                    <div class="slds-badge slds-badge_lightest" style="margin: 5px 0 15px 20px">
+                        <p> Selected Sensors: <span>{selectedSensorsCount}</span></p>
+                    </div>
+                </div>
+                <div class="slds-col" >               
+                        <lightning-button label="Delete Selected Sensors"
+                                          icon-name="utility:delete"
+                                          variant="destructive" 
+                                          onclick={deleteSensors}
+                                          style="margin: 0 50px 0 0">
+                        </lightning-button>
+                </div>
+            </div>
+
+            <lightning-datatable key-field="id" 
+                                data={sensors} 
+                                columns={columns}
+                                onrowselection={getSelectedRecords}>
+            </lightning-datatable>            
+        </template>  
+    </lightning-card>
+</template>
