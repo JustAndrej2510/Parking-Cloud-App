@@ -38,17 +38,22 @@ public with sharing class SensorManagementController {
     }
 
     @AuraEnabled
-    public static void deleteSelectedSensors(List<Id> selectedSensorsId){
+    public static void deleteSelectedSensors(List<String> sensorNameList){
         try{
-            System.debug(selectedSensorsId);
-            if(!selectedSensorsId.isEmpty()){
-                List<Sensor__c> deleteSensorsList = new List<Sensor__c>();
-                for(Id sensorId : selectedSensorsId){
-                    Sensor__c sensor = new Sensor__c(Id = sensorId);
-                    deleteSensorsList.add(sensor);
+            System.debug(sensorNameList);
+            if(!sensorNameList.isEmpty()){
+                List<Sensor__c> deleteSensorList = new List<Sensor__c>();
+                List<Sensor__c> sensorList = [SELECT Name FROM Sensor__c];
+                for(Sensor__c s : sensorList){
+                    for(String sensorName : sensorNameList){
+                        if(s.Name == sensorName){
+                            deleteSensorList.add(s);
+                        }
+                        // Sensor__c sensor = new Sensor__c(Id = sensorName);
+                    }
                 }
-                if(!deleteSensorsList.isEmpty()){
-                    delete deleteSensorsList;
+                if(!deleteSensorList.isEmpty()){
+                    delete deleteSensorList;
                 }
             }
             else{

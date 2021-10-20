@@ -1,9 +1,11 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import { reduceErrors } from 'c/ldsUtils';
+//import { reduceErrors } from 'c/ldsUtils';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import readCSV from '@salesforce/apex/sensorManagementController.readCSVData';
-import getSensors from '@salesforce/apex/sensorManagementController.getSensors';
-import getBaseStations from '@salesforce/apex/sensorManagementController.getBaseStations';
+import {refreshApex} from '@salesforce/apex';
+import readCSV from '@salesforce/apex/SensorManagementController.readCSVData';
+import getSensors from '@salesforce/apex/SensorManagementController.getSensors';
+import getBaseStations from '@salesforce/apex/SensorManagementController.getBaseStations';
+import deleteSelectedSensors from '@salesforce/apex/SensorManagementController.deleteSelectedSensors';
 // import SENSOR_NAME from '@salesforce/schema/Sensor__c.Name';
 // import SENSOR_MODEL from '@salesforce/schema/Sensor__c.Sensor_model__c';
 // import SENSOR_STATUS from '@salesforce/schema/Sensor__c.Status__c';
@@ -17,16 +19,18 @@ const COLUMNS = [
 ]
 export default class sensorManagement extends LightningElement {
     @api recordId;
-    @track columns = COLUMNS;
     @track sensors;
-    wiredRecords;
     @track error;
-    @wire(getBaseStations) baseStations;
+    @track selectedSensorsCount = 0;
+    selectedSensors = [];
+    columns = COLUMNS;
+    wiredData;
 
+    @wire(getBaseStations) baseStations;
     @wire(getSensors) wiredSensors(result){
+        this.wiredData = result.data;
         if(result.data){
             this.error = undefined;
-            this.wiredRecords = result.data;
             //console.log(JSON.stringify(this.wiredRecords));
             let sensorArr = [];
             result.data.forEach(record => {
@@ -50,9 +54,6 @@ export default class sensorManagement extends LightningElement {
         }
 
     };
-
-    // @wire(getSensors)
-    // sensors;
     // get errors(){
     //     return (this.error) ? reduceErrors(this.error) : [];
     // }
@@ -62,7 +63,7 @@ export default class sensorManagement extends LightningElement {
         console.log('fileId: ' + downloadFiles[0].documentId);
         readCSV({contentDocumentId : downloadFiles[0].documentId})
         .then(result=> {
-            console.log('result: '+ result);
+            console.log('result: ' + result);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success',
@@ -70,19 +71,66 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success',
                 }),
             );
+            return refreshApex(this.wiredData);
         })
         .catch(error=>{
-            console.log('error: '+ error);
+            console.log('error: ' + error);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
                     message: JSON.stringify(error),
-                    variant: 'error',
+                    variant: 'Error',
                 }),
             );     
         })
 
     }
 
-   
+    getSelectedRecords(event) {
+        const selectedRows = event.detail.selectedRows;
+        this.selectedSensorsCount = event.detail.selectedRows.length;
+        let selectedRowNames = [];
+        for (let i = 0; i < selectedRows.length; i++) {
+            selectedRowNames.push(selectedRows[i].Name);
+            window.console.log('SelectedRows: ' + selectedRowNames[i]);
+        }
+        this.copySelectedRows(selectedRowNames);
+        // for(let j = 0; j < this.selectedSensors.length; j++){
+        //     window.console.log('Arr: ' + selectedSensors[j]);
+        // }
+    }
+
+    copySelectedRows(arr){
+        this.selectedSensors = arr.slice();
+        window.console.log(this.selectedSensors);
+    }
+
+    deleteSensors(){
+        deleteSelectedSensors({sensorNameList : this.selectedSensors})
+        .then(result=>{
+            window.console.log('result: ' + result);
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Success', 
+                    message: this.selectedSensorsCount + ' Sensors were deleted ', 
+                    variant: 'Success'
+                }),
+            );
+            this.template.querySelector('lightning-datatable').selectedRows = [];
+            this.selectedSensorsCount = 0;
+            this.selectedSensors = [];
+            return refreshApex(this.wiredData);
+        })
+        .catch(error=>{
+            window.console.log('error: ' + error.data);
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Error',
+                    message: JSON.stringify(error),
+                    variant: 'Error',
+                }),
+            );     
+        })
+
+    }
 }
