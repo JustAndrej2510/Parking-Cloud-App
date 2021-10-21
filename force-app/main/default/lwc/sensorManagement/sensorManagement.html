@@ -8,7 +8,7 @@
             </lightning-file-upload>
         </div>
         <template if:true={error}>
-            <p>{error}</p>
+            <p>{errors}</p>
         </template>
         <template if:true={sensors}>
             <div class="slds-grid slds-grid_align-spread">
@@ -26,12 +26,16 @@
                         </lightning-button>
                 </div>
             </div>
-
+            
             <lightning-datatable key-field="id" 
                                 data={sensors} 
                                 columns={columns}
                                 onrowselection={getSelectedRecords}>
-            </lightning-datatable>            
+            </lightning-datatable>
+            <div class="slds-m-vertical_medium content">
+                <p  style="margin-left:20px">Page <b>{page}</b> of <b>{amountPages}</b> </p>
+            </div>
+            <c-pagination onprevious={handlePrevious} onnext={handleNext} onselected={handleSelectChange} onfirst={handleFirst} onlast={handleLast}></c-pagination>            
         </template>  
     </lightning-card>
 </template>
