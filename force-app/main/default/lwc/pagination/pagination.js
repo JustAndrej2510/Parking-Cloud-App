@@ -1,9 +1,11 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import fetchPaginationMetadata from '@salesforce/apex/PaginationMetadata.fetchPaginationMetadata';
 export default class Pagination extends LightningElement {
-  
-   // @track value;
+    @track disabledPrevious = true;
+    @track disabledNext;
+
     @wire(fetchPaginationMetadata) pageRecordsList;
+
     @api get options(){
         let returnOptions = [];
         console.log(JSON.stringify(this.pageRecordsList.data));
@@ -16,9 +18,6 @@ export default class Pagination extends LightningElement {
         console.log(returnOptions);
         return returnOptions;
     }
-
-    @track disabledPrevious = true;
-    @track disabledNext;
 
     @api
     hanldeChangeView(status){
@@ -34,18 +33,6 @@ export default class Pagination extends LightningElement {
         if(status === 'nextEnable'){
             this.disabledNext = false;
         }
-        // if(status === 'previousTrue'){
-        //     this.template.querySelector('lightning-button.previous').disabled = true;
-        // }
-        // if(status === 'previousFalse'){
-        //     this.template.querySelector('lightning-button.previous').disabled = false;
-        // }
-        // if(status === 'nextTrue'){
-        //     this.template.querySelector('lightning-button.next').disabled = true;
-        // }
-        // if(status === 'nextFalse'){
-        //     this.template.querySelector('lightning-button.next').disabled = false;
-        // }
     }
     // renderedCallback(){
     //     this.disabledPrevious = true;    
@@ -64,7 +51,6 @@ export default class Pagination extends LightningElement {
     handleLast(){
         this.dispatchEvent(new CustomEvent('last'));
     }
-
 
     handleSelectChange(event) {
         event.preventDefault();

@@ -32,8 +32,8 @@
                                 columns={columns}
                                 onrowselection={getSelectedRecords}>
             </lightning-datatable>
-            <div class="slds-m-vertical_medium content">
-                <p  style="margin-left:20px">Page <b>{page}</b> of <b>{amountPages}</b> </p>
+            <div class="slds-text-align_center">
+                <p style="margin: 20px 0px -23px 0px;">Page <b>{page}</b> of <b>{amountPages}</b> </p>
             </div>
             <c-pagination onprevious={handlePrevious} onnext={handleNext} onselected={handleSelectChange} onfirst={handleFirst} onlast={handleLast}></c-pagination>            
         </template>  

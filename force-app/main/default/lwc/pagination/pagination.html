@@ -1,12 +1,14 @@
 <template>
-    <lightning-layout>
-        <lightning-layout-item >
+    <div class="slds-grid slds-grid_align-spread slds-p-horizontal_small" >
+        <div class="slds-col slds-grid">
+        <div class="slds-col slds-p-horizontal_xx-small">
             <lightning-button label="First Page" disabled={disabledPrevious} icon-name="utility:chevronleft" onclick={handleFirst}></lightning-button>
-        </lightning-layout-item>
-        <lightning-layout-item>
+        </div>
+        <div class="slds-col slds-p-left_xx-small">
             <lightning-button label="Previous" disabled={disabledPrevious} icon-name="utility:chevronleft" onclick={handlePrevious}></lightning-button>
-        </lightning-layout-item>
-        <lightning-layout-item>
+        </div>
+        
+        <div class="slds-col slds-p-horizontal_xxx-small">
 
             <select class="slds-select" name="optionSelect" onchange={handleSelectChange} style="color:rgb(44, 137, 243); margin-left:20px" >
                 <option disabled="" selected="">Table size</option>
@@ -15,13 +17,15 @@
                 </template>
             </select>
 
-        </lightning-layout-item>    
-        <lightning-layout-item flexibility="grow"></lightning-layout-item>
-        <lightning-layout-item>
+        </div>    
+        </div>
+        <div class="slds-col slds-grid">
+        <div class="slds-col slds-p-horizontal_xx-small">
             <lightning-button label="Next" disabled={disabledNext} icon-name="utility:chevronright" icon-position="right" onclick={handleNext}></lightning-button>
-        </lightning-layout-item>
-        <lightning-layout-item>
+        </div>
+        <div class="slds-col slds-p-horizontal_xx-small">
             <lightning-button label="Last Page" disabled={disabledNext} icon-name="utility:chevronright" icon-position="right" onclick={handleLast}></lightning-button>
-        </lightning-layout-item>
-    </lightning-layout>
+        </div>
+        </div>
+    </div>
 </template>
