@@ -1,8 +1,20 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import fetchPaginationMetadata from '@salesforce/apex/PaginationMetadata.fetchPaginationMetadata';
+import getDefaultSize from '@salesforce/apex/PaginationMetadata.getDefaultSize';
 export default class Pagination extends LightningElement {
     @track disabledPrevious = true;
     @track disabledNext;
+    @track defaultSize;
+
+    connectedCallback(){
+        getDefaultSize().then(result=>{
+            const defaultValueEvent = new CustomEvent("getdefaultsize", {
+                detail: result.Amount_Records__c
+            });
+            this.dispatchEvent(defaultValueEvent);
+        });
+        
+    }
 
     @wire(fetchPaginationMetadata) pageRecordsList;
 

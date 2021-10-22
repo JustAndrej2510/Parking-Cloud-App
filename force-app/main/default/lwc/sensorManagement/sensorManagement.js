@@ -25,7 +25,7 @@ const COLUMNS = [
 export default class sensorManagement extends LightningElement {
     @api recordId;
     @track sensors;
-    @track tableSize = 10;
+    @track tableSize = 0;
     @track tableOffset = 0;
     @track page = 1;
     @track error;
@@ -40,6 +40,11 @@ export default class sensorManagement extends LightningElement {
         getCountSensors().then(result=>{
             this.countSensors = result;
         });
+    }
+
+    handleDefaultSize(event){
+        this.tableSize = event.detail;
+        console.log(this.tableSize);
     }
 
     handleRowAction(event){
@@ -58,7 +63,7 @@ export default class sensorManagement extends LightningElement {
         let keyValue = (k) => {
             return k[fieldName];
         };
-        
+
         let isReverse = direction === 'asc' ? 1: -1;
         parseData.sort((x, y) => {
             x = keyValue(x) ? keyValue(x) : ''; 
