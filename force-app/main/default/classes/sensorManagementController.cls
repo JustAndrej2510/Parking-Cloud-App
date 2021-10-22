@@ -1,7 +1,7 @@
 public with sharing class SensorManagementController {
     public virtual class BaseException extends Exception {}
-    public class SensorsListException extends BaseException {}
-    public class DocumentException extends BaseException {}
+    public class SensorDeleteException extends BaseException {}
+    public class DocumentDownloadException extends BaseException {}
 
     @AuraEnabled
     public static List<Sensor__c> readCSVData(Id contentDocumentId){
@@ -37,7 +37,7 @@ public with sharing class SensorManagementController {
                 }
             }
             else{
-                throw new DocumentException('No dowloaded files');
+                throw new DocumentDownloadException('No dowloaded files');
             }
 
         } catch (Exception ex) {
@@ -55,7 +55,7 @@ public with sharing class SensorManagementController {
                 delete sensor;
             }
             else{
-                throw new SensorsListException('No found selected sensor id');
+                throw new SensorDeleteException('No found selected sensor id');
             }
         }
         catch(Exception ex){

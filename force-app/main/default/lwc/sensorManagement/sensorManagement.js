@@ -25,12 +25,14 @@ const COLUMNS = [
 export default class sensorManagement extends LightningElement {
     @api recordId;
     @track sensors;
-    @track selectedSensorsCount = 0;
     @track tableSize = 10;
     @track tableOffset = 0;
-    @track countSensors;
-    @track error;
     @track page = 1;
+    @track error;
+    @track countSensors;
+    @track sortBy;
+    @track sortDirection;
+
     columns = COLUMNS;
     wiredData;
 
@@ -44,6 +46,30 @@ export default class sensorManagement extends LightningElement {
         const sensor = event.detail.row;
         this.deleteSelectedSensor(sensor.Id, sensor.Name);
     }
+
+    handleSort(event){
+        this.sortBy = event.detail.fieldName;       
+        this.sortDirection = event.detail.sortDirection;       
+        this.sortSensorData(event.detail.fieldName, event.detail.sortDirection);
+    }
+
+    sortSensorData(fieldName, direction) {
+        let parseData = JSON.parse(JSON.stringify(this.sensors));
+        let keyValue = (k) => {
+            return k[fieldName];
+        };
+        
+        let isReverse = direction === 'asc' ? 1: -1;
+        parseData.sort((x, y) => {
+            x = keyValue(x) ? keyValue(x) : ''; 
+            y = keyValue(y) ? keyValue(y) : '';
+           
+            return isReverse * ((x > y) - (y > x));
+        });
+        
+        this.sensors = parseData;
+    }
+
 
     @api
     get amountPages(){
@@ -70,7 +96,6 @@ export default class sensorManagement extends LightningElement {
                 sensorArr.push(sensor);
                 console.log(sensorArr);
             });
-
             this.sensors = sensorArr;
 
         } else if (result.error){

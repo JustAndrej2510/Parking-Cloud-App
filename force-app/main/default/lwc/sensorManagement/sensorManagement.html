@@ -17,6 +17,9 @@
                                 data={sensors} 
                                 columns={columns}
                                 hide-checkbox-column="true"
+                                sorted-by={sortBy}
+                                sorted-direction={sortDirection}
+                                onsort={handleSort}
                                 onrowaction={handleRowAction}>
             </lightning-datatable>
             <div class="slds-text-align_center">
