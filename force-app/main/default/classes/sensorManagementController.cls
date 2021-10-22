@@ -10,7 +10,7 @@ public with sharing class SensorManagementController {
             if(contentDocumentId != null){
                 ContentVersion contentVersionObj = [SELECT Id, VersionData FROM ContentVersion WHERE ContentDocumentId =:contentDocumentId];
                 List<String> csvRecordList = contentVersionObj.VersionData.toString().split('\n');
-                List<Base_Station__c> stations =  getBaseStations();
+                List<Base_Station__c> stations =  [SELECT Id, Name FROM Base_Station__c Order by Name];
                 for(Integer i = 1; i < csvRecordList.size(); i++){
                     Sensor__c newSensor = new Sensor__c();
                     List<String> csvRowList = csvRecordList[i].split(',');
@@ -36,6 +36,9 @@ public with sharing class SensorManagementController {
                     insert sensorList;
                 }
             }
+            else{
+                throw new DocumentException('No dowloaded files');
+            }
 
         } catch (Exception ex) {
             throw new AuraHandledException(ex.getMessage());
@@ -44,25 +47,15 @@ public with sharing class SensorManagementController {
     }
 
     @AuraEnabled
-    public static void deleteSelectedSensors(List<String> sensorNameList){
+    public static void deleteSensor(Id sensorId){
         try{
-            System.debug(sensorNameList);
-            if(!sensorNameList.isEmpty()){
-                List<Sensor__c> deleteSensorList = new List<Sensor__c>();
-                List<Sensor__c> sensorList = [SELECT Name FROM Sensor__c];
-                for(Sensor__c s : sensorList){
-                    for(String sensorName : sensorNameList){
-                        if(s.Name == sensorName){
-                            deleteSensorList.add(s);
-                        }
-                    }
-                }
-                if(!deleteSensorList.isEmpty()){
-                    delete deleteSensorList;
-                }
+            System.debug(sensorId);
+            if(sensorId!=null){
+                Sensor__c sensor = new Sensor__c(Id = sensorId);
+                delete sensor;
             }
             else{
-                throw new SensorsListException('No sensors selected') ;
+                throw new SensorsListException('No found selected sensor id');
             }
         }
         catch(Exception ex){
@@ -80,8 +73,4 @@ public with sharing class SensorManagementController {
         return [SELECT COUNT() FROM Sensor__c];
     }
 
-    @AuraEnabled(cacheable = true)
-    public static List<Base_Station__c> getBaseStations(){
-        return [SELECT Id, Name FROM Base_Station__c Order by Name];
-    }
 }

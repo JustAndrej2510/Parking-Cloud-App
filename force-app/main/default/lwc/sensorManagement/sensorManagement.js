@@ -1,23 +1,27 @@
-import { LightningElement, api, track, wire } from 'lwc';
+import { LightningElement, wire, track, api } from 'lwc';
 //import { reduceErrors } from 'c/ldsUtils';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {refreshApex} from '@salesforce/apex';
 import readCSV from '@salesforce/apex/SensorManagementController.readCSVData';
 import getSensors from '@salesforce/apex/SensorManagementController.getSensors';
-import getBaseStations from '@salesforce/apex/SensorManagementController.getBaseStations';
 import getCountSensors from '@salesforce/apex/SensorManagementController.getCountSensors';
-import deleteSelectedSensors from '@salesforce/apex/SensorManagementController.deleteSelectedSensors';
-// import SENSOR_NAME from '@salesforce/schema/Sensor__c.Name';
-// import SENSOR_MODEL from '@salesforce/schema/Sensor__c.Sensor_model__c';
-// import SENSOR_STATUS from '@salesforce/schema/Sensor__c.Status__c';
-// import SENSOR_BASE_STATION from '@salesforce/schema/Sensor__c.Base_Station__r.Name';
+import deleteSensor from '@salesforce/apex/SensorManagementController.deleteSensor';
+
+const ACTIONS = [
+    { label: 'Delete', name: 'delete' },
+];
 
 const COLUMNS = [
-    {label: 'Name', fieldName: 'Name'},
-    {label: 'Model', fieldName: 'Sensor_model__c'},
-    {label: 'Status', fieldName: 'Status__c'},
-    {label: 'Base Station Name', fieldName: 'Base_Station__r__Name'},
-]
+    {label: 'Name', fieldName: 'Name', sortable: "true"},
+    {label: 'Model', fieldName: 'Sensor_model__c', sortable: "true"},
+    {label: 'Status', fieldName: 'Status__c', sortable: "true"},
+    {label: 'Base Station Name', fieldName: 'Base_Station__r__Name', sortable: "true"},
+    {
+        type: 'action',
+        typeAttributes: { rowActions: ACTIONS },
+    },
+];
+
 export default class sensorManagement extends LightningElement {
     @api recordId;
     @track sensors;
@@ -27,7 +31,6 @@ export default class sensorManagement extends LightningElement {
     @track countSensors;
     @track error;
     @track page = 1;
-    selectedSensors = [];
     columns = COLUMNS;
     wiredData;
 
@@ -37,12 +40,16 @@ export default class sensorManagement extends LightningElement {
         });
     }
 
+    handleRowAction(event){
+        const sensor = event.detail.row;
+        this.deleteSelectedSensor(sensor.Id, sensor.Name);
+    }
+
     @api
     get amountPages(){
         return Math.ceil(this.countSensors / this.tableSize); 
     }
 
-    //@wire(getBaseStations) baseStations;
     @wire(getSensors, {tableOffset : '$tableOffset', tableSize : '$tableSize'}) wiredSensors(result){
         this.wiredData = result.data;
         if(result.data){
@@ -51,49 +58,27 @@ export default class sensorManagement extends LightningElement {
             let sensorArr = [];
             result.data.forEach(record => {
                 console.log("Sensor info: " + JSON.stringify(record));
-                var sensor = {};
+                let sensor = {};
+                sensor.Id = record.Id;
                 sensor.Name = record.Name;
                 sensor.Sensor_model__c = record.Sensor_model__c;
                 sensor.Status__c = record.Status__c;
-                if(record.Base_Station__c !=null){
-                    sensor.Base_Station__r__Name = this.fetchBaseStations(record.Base_Station__c);
+                sensor.Base_Station__c = record.Base_Station__c;
+                if(sensor.Base_Station__c !=null){
+                    sensor.Base_Station__r__Name = record.Base_Station__r.Name;
                 }
-                
-                // this.baseStations.data.forEach(element=>{
-                //     if(element.Id === record.Base_Station__c){
-                //         sensor.Base_Station__r__Name = element.Name;
-                //     }
-                // })
                 sensorArr.push(sensor);
                 console.log(sensorArr);
             });
+
             this.sensors = sensorArr;
-           
+
         } else if (result.error){
             this.error = result.error;
             this.sensors = undefined;
         }
 
     };
-
-    fetchBaseStations(stationId){
-        let name;
-        getBaseStations()
-        .then(stations=>{
-            //console.log(stations);
-            stations.forEach(element=>{
-                if(element.Id === stationId){
-                    //console.log(element.Name);
-                    name = element.Name;
-                }
-            })
-        })
-        return name;
-    }
-
-    get errors(){
-        return (this.error) ? reduceErrors(this.error) : [];
-    }
 
     downloadCSVHandler(event){
         const downloadFiles = event.detail.files;
@@ -108,51 +93,32 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success',
                 }),
             );
-            return refreshApex(this.sensors);
+            return refreshApex(this.wiredData);
         })
         .catch(error=>{
-            console.log('error: ' + error);
+            console.log('error: ' + JSON.stringify(error));
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
-                    message: JSON.stringify(error),
+                    message: error.body.message,
                     variant: 'Error',
                 }),
             );     
         })
     }
 
-    getSelectedRecords(event) {
-        const selectedRows = event.detail.selectedRows;
-        this.selectedSensorsCount = event.detail.selectedRows.length;
-        let selectedRowNames = [];
-        for (let i = 0; i < selectedRows.length; i++) {
-            selectedRowNames.push(selectedRows[i].Name);
-            console.log('SelectedRows: ' + selectedRowNames[i]);
-        }
-        this.copySelectedRows(selectedRowNames);
-    }
-
-    copySelectedRows(arr){
-        this.selectedSensors = arr.slice();
-        console.log(this.selectedSensors);
-    }
-
-    deleteSensors(){
-        deleteSelectedSensors({sensorNameList : this.selectedSensors})
+    deleteSelectedSensor(selectedSensorId, selectedSensorName){
+        deleteSensor({sensorId : selectedSensorId})
         .then(result=>{
             console.log('result: ' + result);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success', 
-                    message: this.selectedSensorsCount + ' Sensors were deleted ', 
+                    message: 'Sensor number ' + selectedSensorName + ' was successfully deleted ', 
                     variant: 'Success'
                 }),
             );
-            this.template.querySelector('lightning-datatable').selectedRows = [];
-            this.selectedSensorsCount = 0;
-            this.selectedSensors = [];
-            return refreshApex(this.sensors);
+            return refreshApex(this.wiredData);
         })
         .catch(error=>{
             console.log('error: ' + JSON.stringify(error));
@@ -198,10 +164,6 @@ export default class sensorManagement extends LightningElement {
     handleNext(){
         this.tableOffset += this.tableSize;
         this.page++;
-        console.log('Offset: ' + this.tableOffset);
-        console.log('Size: ' + this.tableSize);
-        console.log('Count: ' + this.countSensors);
-
         if(this.tableOffset + this.tableSize > this.countSensors){
             this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
             this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
