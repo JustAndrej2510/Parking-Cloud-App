@@ -72,4 +72,8 @@ export default class Pagination extends LightningElement {
 
         this.dispatchEvent(selectedTableSizeEvent);
     }
+
+    handleRefresh(){
+        this.dispatchEvent(new CustomEvent('refresh'));
+    }
 }

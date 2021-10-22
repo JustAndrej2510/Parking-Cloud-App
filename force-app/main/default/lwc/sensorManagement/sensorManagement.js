@@ -1,5 +1,4 @@
 import { LightningElement, wire, track, api } from 'lwc';
-//import { reduceErrors } from 'c/ldsUtils';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {refreshApex} from '@salesforce/apex';
 import readCSV from '@salesforce/apex/SensorManagementController.readCSVData';
@@ -75,17 +74,15 @@ export default class sensorManagement extends LightningElement {
         this.sensors = parseData;
     }
 
-
     @api
     get amountPages(){
         return Math.ceil(this.countSensors / this.tableSize); 
     }
 
     @wire(getSensors, {tableOffset : '$tableOffset', tableSize : '$tableSize'}) wiredSensors(result){
-        this.wiredData = result.data;
+        this.wiredData = result;
         if(result.data){
             this.error = undefined;
-            //console.log(JSON.stringify(this.wiredRecords));
             let sensorArr = [];
             result.data.forEach(record => {
                 console.log("Sensor info: " + JSON.stringify(record));
@@ -123,7 +120,7 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success',
                 }),
             );
-            return refreshApex(this.wiredData);
+            this.refresh();
         })
         .catch(error=>{
             console.log('error: ' + JSON.stringify(error));
@@ -148,7 +145,7 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success'
                 }),
             );
-            return refreshApex(this.wiredData);
+            this.refresh();
         })
         .catch(error=>{
             console.log('error: ' + JSON.stringify(error));
@@ -218,9 +215,15 @@ export default class sensorManagement extends LightningElement {
         this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
     }
 
-
-
-
-
+    refresh(){
+        // this.dispatchEvent(
+        //     new ShowToastEvent({
+        //         title: 'Success',
+        //         message: 'Table updated',
+        //         variant: 'Success',
+        //     }),
+        // );
+        return refreshApex(this.wiredData);
+    }
 
 }
