@@ -17,24 +17,28 @@ public with sharing class SensorManagementController {
                     if(csvRowList[0].trim() == null || csvRowList[0].trim() == ''){
                         throw new DocumentDownloadException('Sensor model field cannot be empty.');
                     }
+                    else{
+                        newSensor.Sensor_model__c = csvRowList[0];
+                    }
                     if(csvRowList[1].trim() != 'Active' && csvRowList[1].trim() != 'Inactive'){
                         throw new DocumentDownloadException('Invalid Status. Status must be Active or Inactive');
                     }
-                    newSensor.Sensor_model__c = csvRowList[0];
-                    newSensor.Status__c = csvRowList[1];
+                    else{
+                        newSensor.Status__c = csvRowList[1];
+                    }
                     if(csvRowList[2].trim() != null){
                         for(Base_Station__c station : stations){
                             if(station.Name == csvRowList[2].trim()){
                                newSensor.Base_Station__c = station.Id;
+                               break;
                             }
                         }
                     }
+                    
                     sensorList.add(newSensor);
                 }
-                if(sensorList.isEmpty()){
-                    throw new DocumentDownloadException('Document is Empty');
-                }
-                else{
+
+                if(!sensorList.isEmpty()){
                     insert sensorList;
                 }
             }
@@ -51,21 +55,6 @@ public with sharing class SensorManagementController {
 
         return sensorList;
     }
-
-    // private static List<Sensor__c> checkCSVData(List<String> csvRecordList){
-    //     try{
-            
-
-    //     }
-    //     catch(DocumentDownloadException ex){
-    //         throw new AuraHandledException(ex.getMessage());
-    //     }
-    //     catch (Exception ex) {
-    //         throw new AuraHandledException(ex.getMessage());
-    //     }
-
-        
-    // }
 
     @AuraEnabled
     public static void deleteSensor(Id sensorId){
