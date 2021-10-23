@@ -29,20 +29,40 @@ export default class sensorManagement extends LightningElement {
     @track page = 1;
     @track error;
     @track countSensors;
+    // @track amountPages;
     @track sortBy;
     @track sortDirection;
 
     columns = COLUMNS;
     wiredData;
+    wiredCountData;
 
     connectedCallback() {
         getCountSensors().then(result=>{
             this.countSensors = result;
         });
+        console.log('Result Count:' + this.countSensors);
+    }
+
+    @wire(getCountSensors) wireCountSensors(result){
+        this.wiredCountData = result;
+        if(result.data){
+            this.error = undefined;
+            this.countSensors = result.data;
+            console.log('Count sensors: ' + this.countSensors);
+        }
+        else if(result.error){
+            this.countSensors = undefined;
+            this.error = result.error;
+        }
     }
 
     handleDefaultSize(event){
         this.tableSize = event.detail;
+        if(this.amountPages == this.page){
+            this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+            this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
+        }
         console.log(this.tableSize);
     }
 
@@ -70,13 +90,21 @@ export default class sensorManagement extends LightningElement {
            
             return isReverse * ((x > y) - (y > x));
         });
-        
+
         this.sensors = parseData;
     }
 
     @api
     get amountPages(){
-        return Math.ceil(this.countSensors / this.tableSize); 
+        if(this.countSensors == 0){
+            console.log("Amount pages: " + Math.ceil(this.countSensors / this.tableSize));
+            return 1;
+        }
+        else{
+            console.log("Amount pages: " + Math.ceil(this.countSensors / this.tableSize));
+            console.log('Count sensors Amount: '+this.countSensors);
+            return Math.ceil(this.countSensors / this.tableSize); 
+        }
     }
 
     @wire(getSensors, {tableOffset : '$tableOffset', tableSize : '$tableSize'}) wiredSensors(result){
@@ -85,7 +113,7 @@ export default class sensorManagement extends LightningElement {
             this.error = undefined;
             let sensorArr = [];
             result.data.forEach(record => {
-                console.log("Sensor info: " + JSON.stringify(record));
+               // console.log("Sensor info: " + JSON.stringify(record));
                 let sensor = {};
                 sensor.Id = record.Id;
                 sensor.Name = record.Name;
@@ -96,10 +124,9 @@ export default class sensorManagement extends LightningElement {
                     sensor.Base_Station__r__Name = record.Base_Station__r.Name;
                 }
                 sensorArr.push(sensor);
-                console.log(sensorArr);
+                //console.log(sensorArr);
             });
             this.sensors = sensorArr;
-
         } else if (result.error){
             this.error = result.error;
             this.sensors = undefined;
@@ -120,7 +147,16 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success',
                 }),
             );
-            this.refresh();
+            refreshApex(this.wiredCountData);
+            refreshApex(this.wiredData);
+            setTimeout(() => {
+                //if(this.tableOffset + this.tableSize < this.countSensors){
+                    console.log("After wire: "+this.countSensors);
+                    this.handleLast();
+                //}
+            }, 500);
+             
+            
         })
         .catch(error=>{
             console.log('error: ' + JSON.stringify(error));
@@ -145,7 +181,15 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success'
                 }),
             );
-            this.refresh();
+            refreshApex(this.wiredCountData);
+            refreshApex(this.wiredData);
+            setTimeout(() => {
+                if(this.page===this.amountPages + 1){
+                    console.log("After delete wire: "+this.countSensors);
+                    this.handleLast();
+                }
+            }, 700);
+            
         })
         .catch(error=>{
             console.log('error: ' + JSON.stringify(error));
@@ -191,7 +235,7 @@ export default class sensorManagement extends LightningElement {
     handleNext(){
         this.tableOffset += this.tableSize;
         this.page++;
-        if(this.tableOffset + this.tableSize > this.countSensors){
+        if(this.tableOffset + this.tableSize >= this.countSensors){
             this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
             this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
         }
@@ -209,10 +253,20 @@ export default class sensorManagement extends LightningElement {
     }
 
     handleLast(){
-        this.tableOffset = this.countSensors - (this.countSensors)%(this.tableSize);
+        let checkLastPage = this.countSensors - (this.countSensors)%(this.tableSize);
+        if(checkLastPage != this.countSensors){
+            this.tableOffset = checkLastPage;
+        }
+        else{
+            this.tableOffset = this.countSensors - this.tableSize;
+        }
+
         this.page = this.amountPages;
-        this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
-        this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+        if(this.page != 1){
+            this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
+            this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+        }
+       
     }
 
     refresh(){
