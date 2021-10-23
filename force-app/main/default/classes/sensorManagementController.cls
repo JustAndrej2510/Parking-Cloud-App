@@ -34,12 +34,11 @@ public with sharing class SensorManagementController {
                             }
                         }
                     }
+                    
                     sensorList.add(newSensor);
                 }
-                if(sensorList.isEmpty()){
-                    throw new DocumentDownloadException('Document is Empty');
-                }
-                else{
+
+                if(!sensorList.isEmpty()){
                     insert sensorList;
                 }
             }
