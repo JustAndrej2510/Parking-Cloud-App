@@ -46,9 +46,6 @@ export default class Pagination extends LightningElement {
             this.disabledNext = false;
         }
     }
-    // renderedCallback(){
-    //     this.disabledPrevious = true;    
-    // }
 
     handlePrevious() {
         this.dispatchEvent(new CustomEvent('previous'));
@@ -71,9 +68,5 @@ export default class Pagination extends LightningElement {
         const selectedTableSizeEvent = new CustomEvent('selected', { detail: value});
 
         this.dispatchEvent(selectedTableSizeEvent);
-    }
-
-    handleRefresh(){
-        this.dispatchEvent(new CustomEvent('refresh'));
     }
 }

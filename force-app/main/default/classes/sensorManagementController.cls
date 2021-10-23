@@ -12,39 +12,60 @@ public with sharing class SensorManagementController {
                 List<String> csvRecordList = contentVersionObj.VersionData.toString().split('\n');
                 List<Base_Station__c> stations =  [SELECT Id, Name FROM Base_Station__c Order by Name];
                 for(Integer i = 1; i < csvRecordList.size(); i++){
-                    Sensor__c newSensor = new Sensor__c();
                     List<String> csvRowList = csvRecordList[i].split(',');
-                    System.debug('csvRow: '+ csvRowList);
+                    Sensor__c newSensor = new Sensor__c();
+                    if(csvRowList[0].trim() == null || csvRowList[0].trim() == ''){
+                        throw new DocumentDownloadException('Sensor model field cannot be empty.');
+                    }
+                    if(csvRowList[1].trim() != 'Active' && csvRowList[1].trim() != 'Inactive'){
+                        throw new DocumentDownloadException('Invalid Status. Status must be Active or Inactive');
+                    }
                     newSensor.Sensor_model__c = csvRowList[0];
                     newSensor.Status__c = csvRowList[1];
                     if(csvRowList[2].trim() != null){
                         for(Base_Station__c station : stations){
-                            System.debug('csvRowList[2]: ' + csvRowList[2]);
                             if(station.Name == csvRowList[2].trim()){
-                                newSensor.Base_Station__c = station.Id;
+                               newSensor.Base_Station__c = station.Id;
                             }
                         }
                     }
-                    else {
-                        newSensor.Base_Station__c = null;
-                    }
-                    
                     sensorList.add(newSensor);
                 }
-                
-                if(!sensorList.isEmpty()) {
+                if(sensorList.isEmpty()){
+                    throw new DocumentDownloadException('Document is Empty');
+                }
+                else{
                     insert sensorList;
                 }
             }
             else{
                 throw new DocumentDownloadException('No dowloaded files');
             }
-
-        } catch (Exception ex) {
+        } 
+        catch(DocumentDownloadException ex){
             throw new AuraHandledException(ex.getMessage());
         }
+        catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
+
         return sensorList;
     }
+
+    // private static List<Sensor__c> checkCSVData(List<String> csvRecordList){
+    //     try{
+            
+
+    //     }
+    //     catch(DocumentDownloadException ex){
+    //         throw new AuraHandledException(ex.getMessage());
+    //     }
+    //     catch (Exception ex) {
+    //         throw new AuraHandledException(ex.getMessage());
+    //     }
+
+        
+    // }
 
     @AuraEnabled
     public static void deleteSensor(Id sensorId){
@@ -57,6 +78,9 @@ public with sharing class SensorManagementController {
             else{
                 throw new SensorDeleteException('No found selected sensor id');
             }
+        }
+        catch(SensorDeleteException ex){
+            throw new AuraHandledException(ex.getMessage());
         }
         catch(Exception ex){
             throw new AuraHandledException(ex.getMessage());
