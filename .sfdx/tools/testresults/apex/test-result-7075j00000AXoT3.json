@@ -1,0 +1,42 @@
+{
+  "summary": {
+    "outcome": "Passed",
+    "testsRan": 1,
+    "passing": 1,
+    "failing": 0,
+    "skipped": 0,
+    "passRate": "100%",
+    "failRate": "0%",
+    "skipRate": "0%",
+    "testStartTime": "Sat Oct 23 2021 21:53:53",
+    "testExecutionTimeInMs": 231,
+    "testTotalTimeInMs": 231,
+    "commandTimeInMs": 780,
+    "hostname": "https://jetbi56-dev-ed.my.salesforce.com",
+    "orgId": "00D5j0000016XqhEAE",
+    "username": "andrey.pisaryk@gmail.com",
+    "testRunId": "7075j00000AXoT3",
+    "userId": "0055j000000i83bAAA"
+  },
+  "tests": [
+    {
+      "id": "07M5j000000sc3LEAQ",
+      "queueItemId": "7095j000000XZn0AAG",
+      "stackTrace": null,
+      "message": null,
+      "asyncApexJobId": "7075j00000AXoT3AAL",
+      "methodName": "testReadCSVData",
+      "outcome": "Pass",
+      "apexLogId": "07L5j000000tH4hEAE",
+      "apexClass": {
+        "id": "01p5j000002hydPAAQ",
+        "name": "SensorManagementControllerTest",
+        "namespacePrefix": null,
+        "fullName": "SensorManagementControllerTest"
+      },
+      "runTime": 231,
+      "testTimestamp": "2021-10-23T18:53:54.000+0000",
+      "fullName": "SensorManagementControllerTest.testReadCSVData"
+    }
+  ]
+}
