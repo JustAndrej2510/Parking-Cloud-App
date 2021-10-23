@@ -1,7 +1,7 @@
 public with sharing class SensorManagementController {
     public virtual class BaseException extends Exception {}
-    public class SensorsListException extends BaseException {}
-    public class DocumentException extends BaseException {}
+    public class SensorDeleteException extends BaseException {}
+    public class DocumentDownloadException extends BaseException {}
 
     @AuraEnabled
     public static List<Sensor__c> readCSVData(Id contentDocumentId){
@@ -10,55 +10,77 @@ public with sharing class SensorManagementController {
             if(contentDocumentId != null){
                 ContentVersion contentVersionObj = [SELECT Id, VersionData FROM ContentVersion WHERE ContentDocumentId =:contentDocumentId];
                 List<String> csvRecordList = contentVersionObj.VersionData.toString().split('\n');
+                List<Base_Station__c> stations =  [SELECT Id, Name FROM Base_Station__c Order by Name];
                 for(Integer i = 1; i < csvRecordList.size(); i++){
-                    Sensor__c newSensor = new Sensor__c();
                     List<String> csvRowList = csvRecordList[i].split(',');
-                    System.debug('csvRow: '+ csvRowList);
+                    Sensor__c newSensor = new Sensor__c();
+                    if(csvRowList[0].trim() == null || csvRowList[0].trim() == ''){
+                        throw new DocumentDownloadException('Sensor model field cannot be empty.');
+                    }
+                    if(csvRowList[1].trim() != 'Active' && csvRowList[1].trim() != 'Inactive'){
+                        throw new DocumentDownloadException('Invalid Status. Status must be Active or Inactive');
+                    }
                     newSensor.Sensor_model__c = csvRowList[0];
                     newSensor.Status__c = csvRowList[1];
-                    for(Base_Station__c station : getBaseStations()){
-                        System.debug('csvRowList[2]: ' + csvRowList[2]);
-                        if(station.Name == csvRowList[2].trim()){
-                            newSensor.Base_Station__c = station.Id;
+                    if(csvRowList[2].trim() != null){
+                        for(Base_Station__c station : stations){
+                            if(station.Name == csvRowList[2].trim()){
+                               newSensor.Base_Station__c = station.Id;
+                            }
                         }
                     }
-                    //newSensor.Base_Station__c = csvRowList[2];
                     sensorList.add(newSensor);
                 }
-                
-                if(!sensorList.isEmpty()) {
+                if(sensorList.isEmpty()){
+                    throw new DocumentDownloadException('Document is Empty');
+                }
+                else{
                     insert sensorList;
                 }
             }
-
-        } catch (Exception ex) {
+            else{
+                throw new DocumentDownloadException('No dowloaded files');
+            }
+        } 
+        catch(DocumentDownloadException ex){
             throw new AuraHandledException(ex.getMessage());
         }
+        catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
+
         return sensorList;
     }
 
+    // private static List<Sensor__c> checkCSVData(List<String> csvRecordList){
+    //     try{
+            
+
+    //     }
+    //     catch(DocumentDownloadException ex){
+    //         throw new AuraHandledException(ex.getMessage());
+    //     }
+    //     catch (Exception ex) {
+    //         throw new AuraHandledException(ex.getMessage());
+    //     }
+
+        
+    // }
+
     @AuraEnabled
-    public static void deleteSelectedSensors(List<String> sensorNameList){
+    public static void deleteSensor(Id sensorId){
         try{
-            System.debug(sensorNameList);
-            if(!sensorNameList.isEmpty()){
-                List<Sensor__c> deleteSensorList = new List<Sensor__c>();
-                List<Sensor__c> sensorList = [SELECT Name FROM Sensor__c];
-                for(Sensor__c s : sensorList){
-                    for(String sensorName : sensorNameList){
-                        if(s.Name == sensorName){
-                            deleteSensorList.add(s);
-                        }
-                        // Sensor__c sensor = new Sensor__c(Id = sensorName);
-                    }
-                }
-                if(!deleteSensorList.isEmpty()){
-                    delete deleteSensorList;
-                }
+            System.debug(sensorId);
+            if(sensorId!=null){
+                Sensor__c sensor = new Sensor__c(Id = sensorId);
+                delete sensor;
             }
             else{
-                throw new SensorsListException('No sensors selected') ;
+                throw new SensorDeleteException('No found selected sensor id');
             }
+        }
+        catch(SensorDeleteException ex){
+            throw new AuraHandledException(ex.getMessage());
         }
         catch(Exception ex){
             throw new AuraHandledException(ex.getMessage());
@@ -66,12 +88,13 @@ public with sharing class SensorManagementController {
     }
 
     @AuraEnabled(cacheable = true)
-    public static List<Sensor__c> getSensors(){
-        return [SELECT Name, Sensor_Model__c, Status__c, Base_Station__c, Base_Station__r.Name FROM Sensor__c ORDER BY Name];
+    public static List<Sensor__c> getSensors(Integer tableOffset, Integer tableSize){
+        return [SELECT Id, Name, Sensor_Model__c, Status__c, Base_Station__c, Base_Station__r.Name FROM Sensor__c LIMIT :tableSize OFFSET :tableOffset ];
     }
 
     @AuraEnabled(cacheable = true)
-    public static List<Base_Station__c> getBaseStations(){
-        return [SELECT Name FROM Base_Station__c ORDER BY Name];
+    public static Integer getCountSensors(){
+        return [SELECT COUNT() FROM Sensor__c];
     }
+
 }

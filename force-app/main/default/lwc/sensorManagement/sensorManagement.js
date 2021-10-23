@@ -1,62 +1,111 @@
-import { LightningElement, api, track, wire } from 'lwc';
-//import { reduceErrors } from 'c/ldsUtils';
+import { LightningElement, wire, track, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import {refreshApex} from '@salesforce/apex';
 import readCSV from '@salesforce/apex/SensorManagementController.readCSVData';
 import getSensors from '@salesforce/apex/SensorManagementController.getSensors';
-import getBaseStations from '@salesforce/apex/SensorManagementController.getBaseStations';
-import deleteSelectedSensors from '@salesforce/apex/SensorManagementController.deleteSelectedSensors';
-// import SENSOR_NAME from '@salesforce/schema/Sensor__c.Name';
-// import SENSOR_MODEL from '@salesforce/schema/Sensor__c.Sensor_model__c';
-// import SENSOR_STATUS from '@salesforce/schema/Sensor__c.Status__c';
-// import SENSOR_BASE_STATION from '@salesforce/schema/Sensor__c.Base_Station__r.Name';
+import getCountSensors from '@salesforce/apex/SensorManagementController.getCountSensors';
+import deleteSensor from '@salesforce/apex/SensorManagementController.deleteSensor';
+
+const ACTIONS = [
+    { label: 'Delete', name: 'delete' },
+];
 
 const COLUMNS = [
-    {label: 'Name', fieldName: 'Name'},
-    {label: 'Model', fieldName: 'Sensor_model__c'},
-    {label: 'Status', fieldName: 'Status__c'},
-    {label: 'Base Station Name', fieldName: 'Base_Station__r__Name'},
-]
+    {label: 'Name', fieldName: 'Name', sortable: "true"},
+    {label: 'Model', fieldName: 'Sensor_model__c', sortable: "true"},
+    {label: 'Status', fieldName: 'Status__c', sortable: "true"},
+    {label: 'Base Station Name', fieldName: 'Base_Station__r__Name', sortable: "true"},
+    {
+        type: 'action',
+        typeAttributes: { rowActions: ACTIONS },
+    },
+];
+
 export default class sensorManagement extends LightningElement {
     @api recordId;
     @track sensors;
+    @track tableSize = 0;
+    @track tableOffset = 0;
+    @track page = 1;
     @track error;
-    @track selectedSensorsCount = 0;
-    selectedSensors = [];
+    @track countSensors;
+    @track sortBy;
+    @track sortDirection;
+
     columns = COLUMNS;
     wiredData;
 
-    @wire(getBaseStations) baseStations;
-    @wire(getSensors) wiredSensors(result){
-        this.wiredData = result.data;
+    connectedCallback() {
+        getCountSensors().then(result=>{
+            this.countSensors = result;
+        });
+    }
+
+    handleDefaultSize(event){
+        this.tableSize = event.detail;
+        console.log(this.tableSize);
+    }
+
+    handleRowAction(event){
+        const sensor = event.detail.row;
+        this.deleteSelectedSensor(sensor.Id, sensor.Name);
+    }
+
+    handleSort(event){
+        this.sortBy = event.detail.fieldName;       
+        this.sortDirection = event.detail.sortDirection;       
+        this.sortSensorData(event.detail.fieldName, event.detail.sortDirection);
+    }
+
+    sortSensorData(fieldName, direction) {
+        let parseData = JSON.parse(JSON.stringify(this.sensors));
+        let keyValue = (k) => {
+            return k[fieldName];
+        };
+
+        let isReverse = direction === 'asc' ? 1: -1;
+        parseData.sort((x, y) => {
+            x = keyValue(x) ? keyValue(x) : ''; 
+            y = keyValue(y) ? keyValue(y) : '';
+           
+            return isReverse * ((x > y) - (y > x));
+        });
+        
+        this.sensors = parseData;
+    }
+
+    @api
+    get amountPages(){
+        return Math.ceil(this.countSensors / this.tableSize); 
+    }
+
+    @wire(getSensors, {tableOffset : '$tableOffset', tableSize : '$tableSize'}) wiredSensors(result){
+        this.wiredData = result;
         if(result.data){
             this.error = undefined;
-            //console.log(JSON.stringify(this.wiredRecords));
             let sensorArr = [];
             result.data.forEach(record => {
+                console.log("Sensor info: " + JSON.stringify(record));
                 let sensor = {};
+                sensor.Id = record.Id;
                 sensor.Name = record.Name;
                 sensor.Sensor_model__c = record.Sensor_model__c;
                 sensor.Status__c = record.Status__c;
-                this.baseStations.data.forEach(element=>{
-                    if(element.Id === record.Base_Station__c){
-                        sensor.Base_Station__r__Name = element.Name;
-                    }
-                })
+                sensor.Base_Station__c = record.Base_Station__c;
+                if(sensor.Base_Station__c !=null){
+                    sensor.Base_Station__r__Name = record.Base_Station__r.Name;
+                }
                 sensorArr.push(sensor);
-                //console.log(sensorArr);
+                console.log(sensorArr);
             });
             this.sensors = sensorArr;
-           
+
         } else if (result.error){
             this.error = result.error;
             this.sensors = undefined;
         }
 
     };
-    // get errors(){
-    //     return (this.error) ? reduceErrors(this.error) : [];
-    // }
 
     downloadCSVHandler(event){
         const downloadFiles = event.detail.files;
@@ -71,66 +120,110 @@ export default class sensorManagement extends LightningElement {
                     variant: 'Success',
                 }),
             );
-            return refreshApex(this.wiredData);
+            this.refresh();
         })
         .catch(error=>{
-            console.log('error: ' + error);
+            console.log('error: ' + JSON.stringify(error));
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
-                    message: JSON.stringify(error),
+                    message: error.body.message,
                     variant: 'Error',
                 }),
             );     
         })
-
     }
 
-    getSelectedRecords(event) {
-        const selectedRows = event.detail.selectedRows;
-        this.selectedSensorsCount = event.detail.selectedRows.length;
-        let selectedRowNames = [];
-        for (let i = 0; i < selectedRows.length; i++) {
-            selectedRowNames.push(selectedRows[i].Name);
-            window.console.log('SelectedRows: ' + selectedRowNames[i]);
-        }
-        this.copySelectedRows(selectedRowNames);
-        // for(let j = 0; j < this.selectedSensors.length; j++){
-        //     window.console.log('Arr: ' + selectedSensors[j]);
-        // }
-    }
-
-    copySelectedRows(arr){
-        this.selectedSensors = arr.slice();
-        window.console.log(this.selectedSensors);
-    }
-
-    deleteSensors(){
-        deleteSelectedSensors({sensorNameList : this.selectedSensors})
+    deleteSelectedSensor(selectedSensorId, selectedSensorName){
+        deleteSensor({sensorId : selectedSensorId})
         .then(result=>{
-            window.console.log('result: ' + result);
+            console.log('result: ' + result);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success', 
-                    message: this.selectedSensorsCount + ' Sensors were deleted ', 
+                    message: 'Sensor number ' + selectedSensorName + ' was successfully deleted ', 
                     variant: 'Success'
                 }),
             );
-            this.template.querySelector('lightning-datatable').selectedRows = [];
-            this.selectedSensorsCount = 0;
-            this.selectedSensors = [];
-            return refreshApex(this.wiredData);
+            this.refresh();
         })
         .catch(error=>{
-            window.console.log('error: ' + error.data);
+            console.log('error: ' + JSON.stringify(error));
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
-                    message: JSON.stringify(error),
+                    message: error.body.message,
                     variant: 'Error',
                 }),
             );     
         })
-
     }
+
+    //---Pagination---
+
+    handleSelectChange(event){
+        this.tableSize = Number(event.detail);
+        this.tableOffset = 0;
+        this.page = 1;
+        if(this.tableSize >= this.countSensors){
+            this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+            this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
+        }
+        else{
+            this.template.querySelector('c-pagination').hanldeChangeView('nextEnable');
+            this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+        }
+    }
+
+    handlePrevious(){
+        this.tableOffset -= this.tableSize;
+        this.page--;
+        if(this.tableOffset === 0){
+            this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+            this.template.querySelector('c-pagination').hanldeChangeView('nextEnable');
+        }
+        else{
+            //this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+            this.template.querySelector('c-pagination').hanldeChangeView('nextEnable');
+        }
+    }
+
+    handleNext(){
+        this.tableOffset += this.tableSize;
+        this.page++;
+        if(this.tableOffset + this.tableSize > this.countSensors){
+            this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
+            this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+        }
+        else{
+            //this.template.querySelector('c-pagination').hanldeChangeView('nextEnable');
+            this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+        }
+    }
+
+    handleFirst(){
+        this.tableOffset = 0;
+        this.page = 1;
+        this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+        this.template.querySelector('c-pagination').hanldeChangeView('nextEnable');
+    }
+
+    handleLast(){
+        this.tableOffset = this.countSensors - (this.countSensors)%(this.tableSize);
+        this.page = this.amountPages;
+        this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
+        this.template.querySelector('c-pagination').hanldeChangeView('previousEnable');
+    }
+
+    refresh(){
+        // this.dispatchEvent(
+        //     new ShowToastEvent({
+        //         title: 'Success',
+        //         message: 'Table updated',
+        //         variant: 'Success',
+        //     }),
+        // );
+        return refreshApex(this.wiredData);
+    }
+
 }

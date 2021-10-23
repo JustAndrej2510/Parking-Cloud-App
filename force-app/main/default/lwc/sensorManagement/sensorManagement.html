@@ -11,27 +11,21 @@
             <p>{error}</p>
         </template>
         <template if:true={sensors}>
-            <div class="slds-grid slds-grid_align-spread">
-                <div class="slds-col">
-                    <div class="slds-badge slds-badge_lightest" style="margin: 5px 0 15px 20px">
-                        <p> Selected Sensors: <span>{selectedSensorsCount}</span></p>
-                    </div>
-                </div>
-                <div class="slds-col" >               
-                        <lightning-button label="Delete Selected Sensors"
-                                          icon-name="utility:delete"
-                                          variant="destructive" 
-                                          onclick={deleteSensors}
-                                          style="margin: 0 50px 0 0">
-                        </lightning-button>
-                </div>
-            </div>
-
             <lightning-datatable key-field="id" 
+                                min-column-width="80"
+                                max-column-width="350"
                                 data={sensors} 
                                 columns={columns}
-                                onrowselection={getSelectedRecords}>
-            </lightning-datatable>            
+                                hide-checkbox-column="true"
+                                sorted-by={sortBy}
+                                sorted-direction={sortDirection}
+                                onsort={handleSort}
+                                onrowaction={handleRowAction}>
+            </lightning-datatable>
+            <div class="slds-text-align_center">
+                <p style="margin: 20px 0px -23px 0px;">Page <b>{page}</b> of <b>{amountPages}</b> </p>
+            </div>
+            <c-pagination ongetdefaultsize={handleDefaultSize} onprevious={handlePrevious} onnext={handleNext} onselected={handleSelectChange} onfirst={handleFirst} onlast={handleLast}></c-pagination>            
         </template>  
     </lightning-card>
 </template>
