@@ -7,7 +7,7 @@ The application has the ability to download data of parking sensors from .CSV fi
 * Pagination with buttons: First page, Last Page, Previous page, Next page, Table size;
 * Sortable columns in the LWC table;
 * Custom Metadata Types;
-* Unit-test coverage 100%;
+* Unit-test coverage 97%;
 ## Sample input .csv file
 [MOCK_SENSORS_DATA.csv](https://github.com/JustAndrej2510/Parking-Cloud-App#:~:text=MOCK_SENSORS_DATA.csv).
 ## Screenshot of the app interface
