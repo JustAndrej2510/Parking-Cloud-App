@@ -98,6 +98,8 @@ export default class sensorManagement extends LightningElement {
     get amountPages(){
         if(this.countSensors == 0){
             console.log("Amount pages: " + Math.ceil(this.countSensors / this.tableSize));
+            //this.template.querySelector('c-pagination').hanldeChangeView('previousDisable');
+            //this.template.querySelector('c-pagination').hanldeChangeView('nextDisable');
             return 1;
         }
         else{
